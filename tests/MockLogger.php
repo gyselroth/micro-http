@@ -1,5 +1,5 @@
 <?php
-namespace Micro\Testsuite;
+namespace Micro\Http\Testsuite;
 
 use \Psr\Log\AbstractLogger;
 
@@ -13,6 +13,6 @@ class MockLogger extends AbstractLogger
             'level'     => $level,
             'message'   => $message,
             'context'   => $context,
-        ];     
+        ];
     }
 }
