@@ -11,8 +11,9 @@ declare(strict_types = 1);
 
 namespace Micro\Http;
 
-use \Micro\Http;
+use \Micro\Http\Http;
 use \Closure;
+use \SimpleXMLElement;
 
 class Response
 {
@@ -311,7 +312,7 @@ class Response
      * @param    string $child_name
      * @return   string
      */
-    public function toXML($data, Config $xml, string $child_name): string
+    public function toXML($data, SimpleXMLElement $xml, string $child_name): string
     {
         if (is_array($data)) {
             foreach ($data as $k => $v) {
@@ -337,7 +338,7 @@ class Response
      */
     public function asXML($body): string
     {
-        $root = new Config('<response></response>');
+        $root = new SimpleXMLElement('<response></response>');
         $raw = $this->toXML($body, $root, 'node');
 
         if ($this->pretty_format) {

@@ -11,6 +11,6 @@ declare(strict_types = 1);
 
 namespace Micro\Http;
 
-class Exception extends \Micro\Exception
+class Exception extends \Exception
 {
 }

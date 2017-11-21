@@ -11,7 +11,7 @@ declare(strict_types = 1);
 
 namespace Micro\Http\Router;
 
-use \Micro\Exception;
+use \Micro\Http\Exception;
 use \Micro\Http\Router;
 use \Psr\Container\ContainerInterface;
 

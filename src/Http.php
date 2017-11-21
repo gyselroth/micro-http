@@ -9,7 +9,7 @@ declare(strict_types = 1);
  * @license   MIT https://opensource.org/licenses/MIT
  */
 
-namespace Micro;
+namespace Micro\Http;
 
 class Http
 {

@@ -4,7 +4,7 @@ namespace Micro\Http\Testsuite;
 use \PHPUnit\Framework\TestCase;
 use \Micro\Http\Router;
 use \Micro\Http\Router\Route;
-use \Micro\Http\Testsuite\MockLogger;
+use \Psr\Log\LoggerInterface;
 
 class RouterTest extends TestCase
 {
@@ -15,7 +15,7 @@ class RouterTest extends TestCase
             'REQUEST_METHOD' => 'PUT',
         ];
 
-        $router = new Router(new MockLogger(), $server);
+        $router = new Router($this->createMock(LoggerInterface::class), $server);
         $this->assertEquals($router->getPath(), 'index.php/api/my/path');
         $this->assertEquals($router->getVerb(), 'put');
         return $router;

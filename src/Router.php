@@ -11,7 +11,6 @@ declare(strict_types = 1);
 
 namespace Micro\Http;
 
-use \Micro\Helper;
 use \Psr\Log\LoggerInterface;
 use \Micro\Http\Router\Route;
 use \ReflectionMethod;
@@ -47,7 +46,7 @@ class Router
     /**
      * Logger
      *
-     * @var Logger
+     * @var LoggerInterface
      */
     protected $logger;
 
