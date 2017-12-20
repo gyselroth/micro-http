@@ -193,6 +193,7 @@ class Router
         ]);
 
         try {
+            $response = null;
             $match = false;
             foreach ($this->routes as $key => $route) {
                 if ($route->match()) {
