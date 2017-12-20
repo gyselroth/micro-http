@@ -1,78 +1,71 @@
 <?php
-declare(strict_types = 1);
+
+declare(strict_types=1);
 
 /**
  * Micro
  *
- * @author    Raffael Sahli <sahli@gyselroth.net>
- * @copyright Copyright (c) 2017 gyselroth GmbH (https://gyselroth.com)
- * @license   MIT https://opensource.org/licenses/MIT
+ * @author      Raffael Sahli <sahli@gyselroth.net>
+ * @copyright   Copryright (c) 2015-2017 gyselroth GmbH (https://gyselroth.com)
+ * @license     MIT https://opensource.org/licenses/MIT
  */
 
 namespace Micro\Http\Router;
 
-use \Micro\Http\Exception;
-use \Micro\Http\Router;
-use \Psr\Container\ContainerInterface;
+use Micro\Http\Router;
+use Psr\Container\ContainerInterface;
 
 class Route
 {
     /**
-     * Router
+     * Router.
      *
      * @var Router
      */
     protected $router;
 
-
     /**
-     * Continue propagation if match
+     * Continue propagation if match.
      *
      * @var bool
      */
     protected $continue_propagation = false;
 
-
     /**
-     * Route path
+     * Route path.
      *
      * @var string
      */
     protected $path;
 
-
     /**
-     * Class to be instanced if route match was found
+     * Class to be instanced if route match was found.
      *
-     * @var string|object
+     * @var object|string
      */
     protected $class;
 
-
     /**
-     * Method to be executed if route match was found
+     * Method to be executed if route match was found.
      *
      * @var string
      */
     protected $method;
 
-
     /**
-     * Found request parameters
+     * Found request parameters.
      *
      * @var array
      */
     protected $params = [];
 
-
     /**
-     * Instance route
+     * Instance route.
      *
-     * @param   string $path
-     * @param   string $class
-     * @param   string $method
-     * @param   array $params
-     * @return  void
+     * @param string $path
+     * @param string $class
+     * @param string $method
+     * @param array  $params
      */
     public function __construct(string $path, $class, ? string $method = null, array $params = [])
     {
@@ -82,20 +75,19 @@ class Route
         $this->setParams($params);
     }
 
-
     /**
-     * Check if route does match the current http request
+     * Check if route does match the current http request.
      *
      * @return bool
      */
     public function match(): bool
     {
-        $regex = preg_replace_callback('#({([A-Z0-9a-z]+)\:\#(.+?)\#})|\{(.+?)\}#', function($match) {
-            if (count($match) === 4) {
+        $regex = preg_replace_callback('#({([A-Z0-9a-z]+)\:\#(.+?)\#})|\{(.+?)\}#', function ($match) {
+            if (4 === count($match)) {
                 return '(?<'.$match[2].'>'.$match[3].'+)';
-            } else {
-                return '(?<'.end($match).'>\w+)';
             }
+
+            return '(?<'.end($match).'>\w+)';
         }, $this->path);
 
         if (preg_match('#^'.$regex.'#', $this->router->getPath(), $matches)) {
@@ -111,56 +103,34 @@ class Route
         return false;
     }
 
-
     /**
-     * Get callable
+     * Get callable.
      *
-     * @param  ContainerInterface $container
+     * @param ContainerInterface $container
+     *
      * @return array
      */
-    public function getCallable(?ContainerInterface $container=null): array
+    public function getCallable(?ContainerInterface $container = null): array
     {
         if (is_object($this->class)) {
             $instance = $this->class;
         } else {
-            if($container === null) {
+            if (null === $container) {
                 $instance = new $this->class();
             } else {
                 $instance = $container->get($this->class);
             }
         }
 
-        if ($this->method !== null) {
+        if (null !== $this->method) {
             return [&$instance, $this->method];
         }
 
         return [&$instance, $this->getMethod()];
     }
 
-
     /**
-     * Build method name
-     *
-     * @param   string $name
-     * @return  string
-     */
-    protected function buildMethodName(? string $name) : string
-    {
-        $result = $this->router->getVerb();
-
-        if ($name !== null) {
-            $split = explode('-', $name);
-            foreach ($split as $part) {
-                $result .= ucfirst($part);
-            }
-        }
-
-        return $result;
-    }
-
-
-    /**
-     * Get http router
+     * Get http router.
      *
      * @return Router
      */
@@ -169,22 +139,22 @@ class Route
         return $this->router;
     }
 
-
     /**
-     * Set http router
+     * Set http router.
      *
-     * @param  Router $router
+     * @param Router $router
+     *
      * @return Route
      */
-    public function setRouter(Router $router): Route
+    public function setRouter(Router $router): self
     {
         $this->router = $router;
+
         return $this;
     }
 
-
     /**
-     * Get path
+     * Get path.
      *
      * @return string
      */
@@ -193,22 +163,22 @@ class Route
         return $this->path;
     }
 
-
     /**
-     * Set path
+     * Set path.
      *
-     * @param  string $path
+     * @param string $path
+     *
      * @return Route
      */
-    public function setPath(string $path): Route
+    public function setPath(string $path): self
     {
-        $this->path = (string)$path;
+        $this->path = (string) $path;
+
         return $this;
     }
 
-
     /**
-     * Get class
+     * Get class.
      *
      * @return string
      */
@@ -221,47 +191,35 @@ class Route
         return $this->class;
     }
 
-
     /**
-     * Set clas
+     * Set clas.
      *
-     * @param   string|object $class
-     * @return  Route
+     * @param object|string $class
+     *
+     * @return Route
      */
-    public function setClass($class): Route
+    public function setClass($class): self
     {
         $this->class = $class;
+
         return $this;
     }
 
-
     /**
-     * Convert camelCase to dashes
-     *
-     * @param  string $value
-     * @return string
-     */
-    protected function camelCase2Dashes(string $value): string
-    {
-        return strtolower(preg_replace('/([a-z])([A-Z])/', '$1-$2', $value));
-    }
-
-
-    /**
-     * Get method
+     * Get method.
      *
      * @return string
      */
     public function getMethod(): string
     {
-        if (substr($this->path, -1) === '$') {
+        if ('$' === substr($this->path, -1)) {
             return $this->router->getVerb();
         }
 
         $path = $this->router->getPath();
         $action = substr($path, strrpos($path, '/') + 1);
 
-        if (!in_array($action, $this->params)) {
+        if (!in_array($action, $this->params, true)) {
             $this->method = $action;
         }
 
@@ -274,35 +232,36 @@ class Route
         return $this->buildMethodName($this->method);
     }
 
-
     /**
-     * Set method
+     * Set method.
      *
-     * @param   string $method
-     * @return  Route
+     * @param string $method
+     *
+     * @return Route
      */
-    public function setMethod(? string $method) : Route
+    public function setMethod(? string $method): self
     {
         $this->method = $method;
+
         return $this;
     }
 
-
     /**
-     * Set params
+     * Set params.
      *
-     * @param   array $params
-     * @return  Route
+     * @param array $params
+     *
+     * @return Route
      */
-    public function setParams(array $params): Route
+    public function setParams(array $params): self
     {
         $this->params = $params;
+
         return $this;
     }
 
-
     /**
-     * Get translated regex variable values
+     * Get translated regex variable values.
      *
      * @return array
      */
@@ -311,9 +270,8 @@ class Route
         return $this->params;
     }
 
-
     /**
-     * Continue propagation after match
+     * Continue propagation after match.
      *
      * @return bool
      */
@@ -322,16 +280,50 @@ class Route
         return $this->continue_propagation;
     }
 
-
     /**
-     * Halt propagation after match
+     * Halt propagation after match.
      *
-     * @param  bool $next
+     * @param bool $next
+     *
      * @return Route
      */
-    public function continuePropagation($next = true): Route
+    public function continuePropagation($next = true): self
     {
-        $this->continue_propagation = (bool)$next;
+        $this->continue_propagation = (bool) $next;
+
         return $this;
+    }
+
+    /**
+     * Build method name.
+     *
+     * @param string $name
+     *
+     * @return string
+     */
+    protected function buildMethodName(? string $name): string
+    {
+        $result = $this->router->getVerb();
+
+        if (null !== $name) {
+            $split = explode('-', $name);
+            foreach ($split as $part) {
+                $result .= ucfirst($part);
+            }
+        }
+
+        return $result;
+    }
+
+    /**
+     * Convert camelCase to dashes.
+     *
+     * @param string $value
+     *
+     * @return string
+     */
+    protected function camelCase2Dashes(string $value): string
+    {
+        return strtolower(preg_replace('/([a-z])([A-Z])/', '$1-$2', $value));
     }
 }

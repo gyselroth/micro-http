@@ -1,11 +1,25 @@
 <?php
+
+declare(strict_types=1);
+
+/**
+ * Micro
+ *
+ * @author      Raffael Sahli <sahli@gyselroth.net>
+ * @copyright   Copryright (c) 2015-2017 gyselroth GmbH (https://gyselroth.com)
+ * @license     MIT https://opensource.org/licenses/MIT
+ */
+
 namespace Micro\Http\Testsuite;
 
-use \PHPUnit\Framework\TestCase;
-use \Micro\Http\Router;
-use \Micro\Http\Router\Route;
-use \Psr\Log\LoggerInterface;
+use Micro\Http\Router;
+use Micro\Http\Router\Route;
+use PHPUnit\Framework\TestCase;
+use Psr\Log\LoggerInterface;
 
+/**
+ * @coversNothing
+ */
 class RouterTest extends TestCase
 {
     public function testInit()
@@ -16,33 +30,38 @@ class RouterTest extends TestCase
         ];
 
         $router = new Router($this->createMock(LoggerInterface::class), $server);
-        $this->assertEquals($router->getPath(), 'index.php/api/my/path');
-        $this->assertEquals($router->getVerb(), 'put');
+        $this->assertSame($router->getPath(), 'index.php/api/my/path');
+        $this->assertSame($router->getVerb(), 'put');
+
         return $router;
     }
 
     /**
      * @depends testInit
+     *
+     * @param mixed $router
      */
     public function testVerb($router)
     {
         $router->setVerb('GET');
-        $this->assertEquals($router->getVerb(), 'get');
+        $this->assertSame($router->getVerb(), 'get');
     }
-
 
     /**
      * @depends testInit
+     *
+     * @param mixed $router
      */
     public function testPath($router)
     {
         $router->setPath('index.php/api');
-        $this->assertEquals($router->getPath(), 'index.php/api');
+        $this->assertSame($router->getPath(), 'index.php/api');
     }
-
 
     /**
      * @depends testInit
+     *
+     * @param mixed $router
      */
     public function testAppendRoute($router)
     {
@@ -51,9 +70,10 @@ class RouterTest extends TestCase
         $this->assertCount(1, $router->getRoutes());
     }
 
-
     /**
      * @depends testInit
+     *
+     * @param mixed $router
      */
     public function testClearRoutes($router)
     {

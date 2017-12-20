@@ -1,12 +1,13 @@
 <?php
-declare(strict_types = 1);
+
+declare(strict_types=1);
 
 /**
  * Micro
  *
- * @author    Raffael Sahli <sahli@gyselroth.net>
- * @copyright Copyright (c) 2017 gyselroth GmbH (https://gyselroth.com)
- * @license   MIT https://opensource.org/licenses/MIT
+ * @author      Raffael Sahli <sahli@gyselroth.net>
+ * @copyright   Copryright (c) 2015-2017 gyselroth GmbH (https://gyselroth.com)
+ * @license     MIT https://opensource.org/licenses/MIT
  */
 
 namespace Micro\Http;
@@ -14,13 +15,12 @@ namespace Micro\Http;
 class Http
 {
     /**
-     * HTTP verbs
+     * HTTP verbs.
      */
     const VERBS = ['get', 'post', 'put', 'delete', 'head', 'options', 'patch'];
 
-
     /**
-     * Status codes
+     * Status codes.
      */
     const STATUS_CODES = [
         100 => 'Continue',
@@ -66,6 +66,6 @@ class Http
         506 => 'Variant Also Negotiates',
         507 => 'Insufficient Storage',
         508 => 'Loop Detected',
-        509 => 'Bandwidth Limit Exceeded'
+        509 => 'Bandwidth Limit Exceeded',
     ];
 }

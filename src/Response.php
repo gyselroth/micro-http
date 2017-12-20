@@ -1,123 +1,113 @@
 <?php
-declare(strict_types = 1);
+
+declare(strict_types=1);
 
 /**
  * Micro
  *
- * @author    Raffael Sahli <sahli@gyselroth.net>
- * @copyright Copyright (c) 2017 gyselroth GmbH (https://gyselroth.com)
- * @license   MIT https://opensource.org/licenses/MIT
+ * @author      Raffael Sahli <sahli@gyselroth.net>
+ * @copyright   Copryright (c) 2015-2017 gyselroth GmbH (https://gyselroth.com)
+ * @license     MIT https://opensource.org/licenses/MIT
  */
 
 namespace Micro\Http;
 
-use \Micro\Http\Http;
-use \Closure;
-use \SimpleXMLElement;
+use Closure;
+use SimpleXMLElement;
 
 class Response
 {
     /**
-     * Output format
+     * Possible output formats.
+     */
+    const OUTPUT_FORMATS = [
+        'json' => 'application/json; charset=utf-8',
+        'xml' => 'application/xml; charset=utf-8',
+        'text' => 'text/html; charset=utf-8',
+    ];
+    /**
+     * Output format.
      *
      * @var string
      */
     protected $output_format = 'json';
 
-
     /**
-     * Possible output formats
-     */
-    const OUTPUT_FORMATS = [
-        'json' => 'application/json; charset=utf-8',
-        'xml'  => 'application/xml; charset=utf-8',
-        'text' => 'text/html; charset=utf-8'
-    ];
-
-
-    /**
-     * Human readable output
+     * Human readable output.
      *
      * @var bool
      */
     protected $pretty_format = false;
 
-
     /**
-     * Headers
+     * Headers.
      *
      * @var array
      */
     protected $headers = [];
 
-
     /**
-     * Code
+     * Code.
      *
      * @var int
      */
     protected $code = 200;
 
-
     /**
-     * Body
+     * Body.
      *
      * @var string
      */
     protected $body;
 
-
     /**
-     * body only
+     * body only.
      *
      * @var bool
      */
     protected $body_only = false;
 
-
     /**
-     * Init response
-     *
-     * @return void
+     * Init response.
      */
     public function __construct()
     {
         $this->setupFormats();
     }
 
-
     /**
-     * Set header
+     * Set header.
      *
-     * @param   string $header
-     * @param   string $value
-     * @return  Response
+     * @param string $header
+     * @param string $value
+     *
+     * @return Response
      */
-    public function setHeader(string $header, string $value): Response
+    public function setHeader(string $header, string $value): self
     {
         $this->headers[$header] = $value;
+
         return $this;
     }
 
-
     /**
-     * Delete header
+     * Delete header.
      *
-     * @param   string $header
-     * @return  Response
+     * @param string $header
+     *
+     * @return Response
      */
-    public function removeHeader(string $header): Response
+    public function removeHeader(string $header): self
     {
-        if(isset($this->headers[$header])) {
+        if (isset($this->headers[$header])) {
             unset($this->headers[$header]);
         }
 
         return $this;
     }
 
-
     /**
-     * Get headers
+     * Get headers.
      *
      * @return array
      */
@@ -126,13 +116,12 @@ class Response
         return $this->headers;
     }
 
-
     /**
-     * Send headers
+     * Send headers.
      *
-     * @return  Response
+     * @return Response
      */
-    public function sendHeaders(): Response
+    public function sendHeaders(): self
     {
         foreach ($this->headers as $header => $value) {
             header($header.': '.$value);
@@ -141,26 +130,26 @@ class Response
         return $this;
     }
 
-
     /**
-     * Set response code
+     * Set response code.
      *
-     * @param   int $code
-     * @return  Response
+     * @param int $code
+     *
+     * @return Response
      */
-    public function setCode(int $code): Response
+    public function setCode(int $code): self
     {
         if (!array_key_exists($code, Http::STATUS_CODES)) {
             throw new Exception('invalid http code set');
         }
 
         $this->code = $code;
+
         return $this;
     }
 
-
     /**
-     * Get response code
+     * Get response code.
      *
      * @return int
      */
@@ -169,15 +158,15 @@ class Response
         return $this->code;
     }
 
-
     /**
-     * Set body
+     * Set body.
      *
-     * @param  mixed $body
-     * @param  bool $body_only
+     * @param mixed $body
+     * @param bool  $body_only
+     *
      * @return Response
      */
-    public function setBody($body, bool $body_only = false): Response
+    public function setBody($body, bool $body_only = false): self
     {
         $this->body = $body;
         $this->body_only = $body_only;
@@ -186,9 +175,8 @@ class Response
         return $this;
     }
 
-
     /**
-     * Get body
+     * Get body.
      *
      * @return string
      */
@@ -197,11 +185,8 @@ class Response
         return $this->body;
     }
 
-
     /**
      * Sends the actual response.
-     *
-     * @return  void
      */
     public function send(): void
     {
@@ -209,17 +194,17 @@ class Response
         $this->sendHeaders();
         header('HTTP/1.0 '.$this->code.' '.$status, true, $this->code);
 
-        if ($this->body === null && $this->code == 204) {
+        if (null === $this->body && 204 === $this->code) {
             $this->terminate();
         }
 
-        if($this->body instanceof Closure) {
+        if ($this->body instanceof Closure) {
             $body = $this->body->call($this);
         } else {
             $body = $this->body;
         }
 
-        if ($this->body_only === false && $this->output_format !== 'text') {
+        if (false === $this->body_only && 'text' !== $this->output_format) {
             $body = ['data' => $body];
             $body['status'] = intval($this->code);
             $body = array_reverse($body, true);
@@ -228,27 +213,26 @@ class Response
         switch ($this->output_format) {
             case null:
             break;
-
             default:
             case 'json':
                 echo $this->asJSON($body);
-            break;
 
+            break;
             case 'xml':
                 echo $this->asXML($body);
-            break;
 
+            break;
             case 'text':
                 echo $body;
+
             break;
         }
 
         //$this->terminate();
     }
 
-
     /**
-     * Get output format
+     * Get output format.
      *
      * @return string
      */
@@ -257,37 +241,39 @@ class Response
         return $this->output_format;
     }
 
-
     /**
-     * Convert response to human readable output
+     * Convert response to human readable output.
      *
-     * @param   bool $format
-     * @return  Response
+     * @param bool $format
+     *
+     * @return Response
      */
-    public function setPrettyFormat(bool $format): Response
+    public function setPrettyFormat(bool $format): self
     {
-        $this->pretty_format = (bool)$format;
+        $this->pretty_format = (bool) $format;
+
         return $this;
     }
-
 
     /**
      * Set header Content-Length $body.
      *
-     * @param  string $body
+     * @param string $body
+     *
      * @return Response
      */
-    public function setContentLength(string $body): Response
+    public function setContentLength(string $body): self
     {
         header('Content-Length: '.strlen($body));
+
         return $this;
     }
-
 
     /**
      * Converts $body to pretty json.
      *
-     * @param  mixed $body
+     * @param mixed $body
+     *
      * @return string
      */
     public function asJSON($body): string
@@ -303,14 +289,14 @@ class Response
         return $result;
     }
 
-
     /**
-     * Converts mixed data to XML
+     * Converts mixed data to XML.
      *
-     * @param    mixed $data
-     * @param    SimpleXMLElement $xml
-     * @param    string $child_name
-     * @return   string
+     * @param mixed            $data
+     * @param SimpleXMLElement $xml
+     * @param string           $child_name
+     *
+     * @return string
      */
     public function toXML($data, SimpleXMLElement $xml, string $child_name): string
     {
@@ -329,12 +315,12 @@ class Response
         return $xml->asXML();
     }
 
-
     /**
      * Converts response to xml.
      *
-     * @param   mixed $body
-     * @return  string
+     * @param mixed $body
+     *
+     * @return string
      */
     public function asXML($body): string
     {
@@ -346,15 +332,16 @@ class Response
         }
 
         $this->setContentLength($raw);
+
         return $raw;
     }
 
-
     /**
-     * Pretty formatted xml
+     * Pretty formatted xml.
      *
-     * @param   string $xml
-     * @return  string
+     * @param string $xml
+     *
+     * @return string
      */
     public function prettyXml(string $xml): string
     {
@@ -366,56 +353,55 @@ class Response
         return $domxml->saveXML();
     }
 
-
     /**
      * Set the current output format.
      *
-     * @param  string $format
+     * @param string $format
+     *
      * @return Response
      */
-    public function setOutputFormat(?string $format=null): Response
+    public function setOutputFormat(?string $format = null): self
     {
-        if($format === null) {
+        if (null === $format) {
             $this->output_format = null;
+
             return $this->removeHeader('Content-Type');
         }
 
-        if(!array_key_exists($format, self::OUTPUT_FORMATS)) {
+        if (!array_key_exists($format, self::OUTPUT_FORMATS)) {
             throw new Exception('invalid output format given');
         }
 
         $this->setHeader('Content-Type', self::OUTPUT_FORMATS[$format]);
         $this->output_format = $format;
+
         return $this;
     }
 
-
     /**
-     * Abort after response
-     *
-     * @return void
+     * Abort after response.
      */
     public function terminate(): void
     {
         exit();
     }
 
-
     /**
      * Setup formats.
      *
      * @return Response
      */
-    public function setupFormats(): Response
+    public function setupFormats(): self
     {
-        $pretty = array_key_exists('pretty', $_GET) && ($_GET['pretty'] != 'false' && $_GET['pretty'] != '0');
+        $pretty = array_key_exists('pretty', $_GET) && ('false' !== $_GET['pretty'] && '0' !== $_GET['pretty']);
         $this->setPrettyFormat($pretty);
 
         //through HTTP_ACCEPT
-        if (isset($_SERVER['HTTP_ACCEPT']) && strpos($_SERVER['HTTP_ACCEPT'], '*/*') === false) {
+        if (isset($_SERVER['HTTP_ACCEPT']) && false === strpos($_SERVER['HTTP_ACCEPT'], '*/*')) {
             foreach (self::OUTPUT_FORMATS as $format) {
-                if (strpos($_SERVER['HTTP_ACCEPT'], $format) !== false) {
+                if (false !== strpos($_SERVER['HTTP_ACCEPT'], $format)) {
                     $this->output_format = $format;
+
                     break;
                 }
             }
