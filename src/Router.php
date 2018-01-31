@@ -1,73 +1,78 @@
 <?php
-
-declare(strict_types=1);
+declare(strict_types = 1);
 
 /**
  * Micro
  *
- * @author      Raffael Sahli <sahli@gyselroth.net>
- * @copyright   Copryright (c) 2015-2017 gyselroth GmbH (https://gyselroth.com)
- * @license     MIT https://opensource.org/licenses/MIT
+ * @author    Raffael Sahli <sahli@gyselroth.net>
+ * @copyright Copyright (c) 2017 gyselroth GmbH (https://gyselroth.com)
+ * @license   MIT https://opensource.org/licenses/MIT
  */
 
 namespace Micro\Http;
 
-use Micro\Http\Router\Route;
-use Psr\Container\ContainerInterface;
-use Psr\Log\LoggerInterface;
-use ReflectionException;
-use ReflectionMethod;
+use \Psr\Log\LoggerInterface;
+use \Micro\Http\Router\Route;
+use \ReflectionMethod;
+use \ReflectionException;
+use \Psr\Container\ContainerInterface;
 
 class Router
 {
     /**
-     * Requested route.
+     * Requested route
      *
      * @var string
      */
     protected $path;
 
+
     /**
-     * HTTP verb.
+     * HTTP verb
      *
      * @var string
      */
     protected $verb;
 
+
     /**
-     * Installed routes.
+     * Installed routes
      *
      * @var array
      */
     protected $routes = [];
 
+
     /**
-     * Logger.
+     * Logger
      *
      * @var LoggerInterface
      */
     protected $logger;
 
+
     /**
-     * DI container.
+     * DI container
      *
      * @var ContainerInterface
      */
     protected $container;
 
+
     /**
-     * Init router.
+     * Init router
      *
-     * @param LoggerInterface    $logger
-     * @param ContainerInterface $container
-     * @param array              $request
+     * @param   LoggerInterface $logger
+     * @param   ContainerInterface $container
+     * @param   array $request
+     * @return  void
      */
-    public function __construct(LoggerInterface $logger, ?array $request = null, ?ContainerInterface $container = null)
+    public function __construct(LoggerInterface $logger, ?array $request=null, ?ContainerInterface $container=null)
     {
         $this->logger = $logger;
         $this->container = $container;
 
-        if (null === $request) {
+        if($request === null) {
             $request = $_SERVER;
         }
 
@@ -80,50 +85,49 @@ class Router
         }
     }
 
+
     /**
-     * Add route to the beginning of the routing table.
+     * Add route to the beginning of the routing table
      *
-     * @param Route $route
-     *
-     * @return Router
+     * @param   Route $route
+     * @return  Router
      */
-    public function prependRoute(Route $route): self
+    public function prependRoute(Route $route): Router
     {
         array_unshift($this->routes, $route);
         $route->setRouter($this);
-
         return $this;
     }
 
+
     /**
-     * Add route to the end of the routing table.
+     * Add route to the end of the routing table
      *
-     * @param Route $route
-     *
-     * @return Router
+     * @param   Route $route
+     * @return  Router
      */
-    public function appendRoute(Route $route): self
+    public function appendRoute(Route $route): Router
     {
         $this->routes[] = $route;
         $route->setRouter($this);
-
         return $this;
     }
 
+
     /**
-     * Clear routing table.
+     * Clear routing table
      *
      * @return Router
      */
-    public function clearRoutingTable(): self
+    public function clearRoutingTable(): Router
     {
         $this->routes = [];
-
         return $this;
     }
 
+
     /**
-     * Get active routes.
+     * Get active routes
      *
      * @return array
      */
@@ -132,22 +136,22 @@ class Router
         return $this->routes;
     }
 
+
     /**
-     * Set HTTP verb.
+     * Set HTTP verb
      *
-     * @param string $verb
-     *
-     * @return Router
+     * @param   string $verb
+     * @return  Router
      */
-    public function setVerb(string $verb): self
+    public function setVerb(string $verb): Router
     {
         $this->verb = strtolower($verb);
-
         return $this;
     }
 
+
     /**
-     * Get http verb.
+     * Get http verb
      *
      * @return string
      */
@@ -156,23 +160,23 @@ class Router
         return $this->verb;
     }
 
+
     /**
-     * Set routing path.
+     * Set routing path
      *
-     * @param string $path
-     *
-     * @return Router
+     * @param   string $path
+     * @return  Router
      */
-    public function setPath(string $path): self
+    public function setPath(string $path): Router
     {
         $path = rtrim(trim($path), '/');
-        $this->path = (string) $path;
-
+        $this->path = (string)$path;
         return $this;
     }
 
+
     /**
-     * Get path.
+     * Get path
      *
      * @return string
      */
@@ -181,8 +185,27 @@ class Router
         return $this->path;
     }
 
+
     /**
-     * Execute router.
+     * Build method name
+     *
+     * @param   string $name
+     * @return  string
+     */
+    protected function _buildMethodName(string $name): string
+    {
+        $result = $this->verb;
+        $split = explode('-', $name);
+        foreach ($split as $part) {
+            $result .= ucfirst($part);
+        }
+
+        return $result;
+    }
+
+
+    /**
+     * Execute router
      *
      * @return bool
      */
@@ -193,7 +216,6 @@ class Router
         ]);
 
         try {
-            $response = null;
             $match = false;
             foreach ($this->routes as $key => $route) {
                 if ($route->match()) {
@@ -223,19 +245,20 @@ class Router
                 }
             }
 
-            if (false === $match) {
+            if ($match === false) {
                 throw new Exception($this->verb.' '.$this->path.' could not be routed, no matching routes found');
-            }
-            if ($response instanceof Response) {
-                $this->logger->info('send http response ['.$response->getCode().']', [
+            } else {
+                if ($response instanceof Response) {
+                    $this->logger->info('send http response ['.$response->getCode().']', [
                         'category' => get_class($this),
                     ]);
 
-                $response->send();
-            } else {
-                $this->logger->debug('callback did not return a response, route exectuted successfully', [
+                    $response->send();
+                } else {
+                    $this->logger->debug('callback did not return a response, route exectuted successfully', [
                         'category' => get_class($this),
                     ]);
+                }
             }
 
             return true;
@@ -244,12 +267,12 @@ class Router
         }
     }
 
+
     /**
-     * Sends a exception response to the client.
+     * Sends a exception response to the client
      *
-     * @param \Exception $exception
-     *
-     * @return bool
+     * @param   \Exception $exception
+     * @return  bool
      */
     public function sendException(\Exception $exception): bool
     {
@@ -257,12 +280,12 @@ class Router
         $class = get_class($exception);
 
         $msg = [
-            'error' => $class,
+            'error'   => $class,
             'message' => $message,
-            'code' => $exception->getCode(),
+            'code'    => $exception->getCode()
         ];
 
-        if (defined("$class::HTTP_CODE")) {
+        if(defined("$class::HTTP_CODE")) {
             $http_code = $class::HTTP_CODE;
         } else {
             $http_code = 500;
@@ -281,43 +304,25 @@ class Router
         return true;
     }
 
-    /**
-     * Build method name.
-     *
-     * @param string $name
-     *
-     * @return string
-     */
-    protected function _buildMethodName(string $name): string
-    {
-        $result = $this->verb;
-        $split = explode('-', $name);
-        foreach ($split as $part) {
-            $result .= ucfirst($part);
-        }
-
-        return $result;
-    }
 
     /**
      * Check if method got params and combine these with
-     * $_REQUEST.
+     * $_REQUEST
      *
-     * @param string $class
-     * @param string $method
-     * @param array  $parsed_params
-     *
-     * @return callable
+     * @param   string $class
+     * @param   string $method
+     * @param   array $parsed_params
+     * @return  callable
      */
     protected function getParams(string $class, string $method, array $parsed_params): array
     {
         try {
-            $return = [];
-            $meta = new ReflectionMethod($class, $method);
-            $params = $meta->getParameters();
+            $return      = [];
+            $meta        = new ReflectionMethod($class, $method);
+            $params      = $meta->getParameters();
             $json_params = [];
 
-            if (isset($_SERVER['CONTENT_TYPE']) && 'application/json' === $_SERVER['CONTENT_TYPE']) {
+            if (isset($_SERVER['CONTENT_TYPE']) && $_SERVER['CONTENT_TYPE'] == 'application/json') {
                 $body = file_get_contents('php://input');
                 if (!empty($body)) {
                     $json_params = json_decode($body, true);
@@ -327,7 +332,7 @@ class Router
                         $json_params = json_decode(urldecode($parts[0]), true);
                     }
                 }
-                if (null === $json_params) {
+                if ($json_params === null) {
                     throw new Exception('invalid json input given');
                 }
 
@@ -337,34 +342,48 @@ class Router
             }
 
             foreach ($params as $param) {
-                if ($optional = $param->isOptional()) {
-                    $default = $param->getDefaultValue();
-                } else {
-                    $default = null;
-                }
+                $type = (string)$param->getType();
+                $optional = $param->isOptional();
 
-                if (isset($request_params[$param->name]) && '' !== $request_params[$param->name]) {
-                    if (is_bool($default)) {
-                        if ('false' === $request_params[$param->name]) {
-                            $return[$param->name] = false;
-                        } else {
-                            $return[$param->name] = (bool) $request_params[$param->name];
-                        }
-                    } elseif (is_int($default)) {
-                        $return[$param->name] = (int) $request_params[$param->name];
-                    } elseif (is_array($default)) {
-                        $return[$param->name] = (array) $request_params[$param->name];
-                    } else {
-                        $return[$param->name] = $request_params[$param->name];
-                    }
+                if (isset($request_params[$param->name]) && $request_params[$param->name] !== '') {
+                    $param_value = $request_params[$param->name];
                 } elseif (isset($json_params[$param->name])) {
-                    $return[$param->name] = $json_params[$param->name];
+                    $param_value = $json_params[$param->name];
+                } else if($optional === true) {
+                    $return[$param->name] = $param->getDefaultValue();
+                    continue;
                 } else {
-                    $return[$param->name] = $default;
+                    $param_value = null;
                 }
 
-                if (null === $return[$param->name] && false === $optional) {
+                if ($param_value === null && $optional === false) {
                     throw new Exception('misssing required parameter '.$param->name);
+                }
+
+                switch($type) {
+                    case 'bool':
+                        if($param_value === 'false') {
+                             $return[$param->name] = false;
+                        } else {
+                            $return[$param->name] = (bool)$param_value;
+                        }
+                    break;
+                    case 'int':
+                        $return[$param->name] = (int)$param_value;
+                    break;
+                    case 'float':
+                        $return[$param->name] = (float)$param_value;
+                    break;
+                    case 'array':
+                        $return[$param->name] = (array)$param_value;
+                    break;
+                    default:
+                        if(class_exists($type) && $param_value !== null) {
+                            $return[$param->name] = new $type($param_value);
+                        } else {
+                            $return[$param->name] = $param_value;
+                        }
+                    break;
                 }
             }
 

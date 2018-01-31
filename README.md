@@ -1,5 +1,4 @@
-# Micro (Yet another PHP library)
-...but no shit
+# Lightweight HTTP routing
 
 [![Build Status](https://travis-ci.org/gyselroth/micro-http.svg?branch=master)](https://travis-ci.org/gyselroth/micro-http)
 [![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/gyselroth/micro-http/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/gyselroth/micro-http/?branch=master)
@@ -10,7 +9,7 @@
 ## Description
 
 ## Requirements
-The library is only >= PHP7.1 compatible.
+The component is only >= PHP7.1 compatible.
 
 ## Download
 The package is available at packagist: https://packagist.org/packages/gyselroth/micro-http
@@ -20,19 +19,19 @@ To install the package via composer execute:
 composer require gyselroth/micro-http
 ```
 
-## HTTP (\Micro\Http)
+## Documentation
 
-#### Initialize router
+### Initialize router
 The http router requires an array with http headers, usually this is $_SERVER and a PSR-3 compatible logger.
 
 ```php
-$router = new \Micro\Http\Router(array $server, \Psr\Log\LoggerInterface $logger)
+$router = new \Micro\Http\Router(\Psr\Log\LoggerInterface $logger, array $server, ?\Psr\Container\ContainerInterface);
 ```
 
-#### Adding routes
+### Adding routes
 
 ```php
-$router = (new \Micro\Http\Router($_SERVER, $logger))
+$router = (new \Micro\Http\Router($logger))
   ->clearRoutingTable()
   ->addRoute(new \Micro\Http\Router\Route('/api/v1/user', 'MyApp\Rest\v1\User'))
   ->addRoute(new \Micro\Http\Router\Route('/api/v1/user/{uid:#([0-9a-z]{24})#}', 'MyApp\Rest\v1\User'))
@@ -108,7 +107,7 @@ class User
 }
 ```
 
-#### Response
+### Response
 Each endpoint needs to return a Response object to the router.
 
 ```php
