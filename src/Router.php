@@ -215,6 +215,8 @@ class Router
             'category' => get_class($this),
         ]);
 
+        $response = null;
+
         try {
             $match = false;
             foreach ($this->routes as $key => $route) {
