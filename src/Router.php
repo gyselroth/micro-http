@@ -165,7 +165,7 @@ class Router
      */
     public function getContentType(): string
     {
-        return $this->type;
+        return $this->content_type;
     }
 
     /**
