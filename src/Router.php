@@ -56,6 +56,13 @@ class Router
     protected $container;
 
     /**
+     * Content type.
+     *
+     * @var string
+     */
+    protected $content_type;
+
+    /**
      * Init router.
      *
      * @param LoggerInterface    $logger
@@ -69,6 +76,10 @@ class Router
 
         if (null === $request) {
             $request = $_SERVER;
+        }
+
+        if (isset($request['CONTENT_TYPE'])) {
+            $this->setContentType($request['CONTENT_TYPE']);
         }
 
         if (isset($request['PATH_INFO'])) {
@@ -130,6 +141,31 @@ class Router
     public function getRoutes(): array
     {
         return $this->routes;
+    }
+
+    /**
+     * Set Content type.
+     *
+     * @param string $type
+     *
+     * @return Router
+     */
+    public function setContentType(string $type): self
+    {
+        $parts = explode(';', $type);
+        $this->content_type = $parts[0];
+
+        return $this;
+    }
+
+    /**
+     * Get content type.
+     *
+     * @return string
+     */
+    public function getContentType(): string
+    {
+        return $this->type;
     }
 
     /**
@@ -318,7 +354,11 @@ class Router
             $params = $meta->getParameters();
             $json_params = [];
 
-            if (isset($_SERVER['CONTENT_TYPE']) && 'application/json' === $_SERVER['CONTENT_TYPE']) {
+            if ('application/x-www-form-urlencoded' === $this->content_type) {
+                $body = file_get_contents('php://input');
+                parse_str($body, $decode);
+                $request_params = array_merge($decode, $_REQUEST, $parsed_params);
+            } elseif ('application/json' === $this->content_type) {
                 $body = file_get_contents('php://input');
                 if (!empty($body)) {
                     $json_params = json_decode($body, true);
@@ -332,7 +372,7 @@ class Router
                     throw new Exception('invalid json input given');
                 }
 
-                $request_params = array_merge($json_params, $parsed_params);
+                $request_params = array_merge($json_params, $_REQUEST, $parsed_params);
             } else {
                 $request_params = array_merge($parsed_params, $_REQUEST);
             }

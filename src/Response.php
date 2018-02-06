@@ -72,7 +72,6 @@ class Response
      * Set header.
      *
      * @param string $header
-     * @param string $value
      *
      * @return Response
      */
@@ -161,8 +160,6 @@ class Response
     public function setBody($body): self
     {
         $this->body = $body;
-        //$this->body_only = $body_only;
-        $this->setOutputFormat($this->output_format);
 
         return $this;
     }
@@ -182,6 +179,10 @@ class Response
      */
     public function send(): void
     {
+        if (!isset($this->headers['Content-Type'])) {
+            //    $this->setOutputFormat(null);
+        }
+
         $status = Http::STATUS_CODES[$this->code];
         $this->sendHeaders();
         header('HTTP/1.0 '.$this->code.' '.$status, true, $this->code);
@@ -195,12 +196,6 @@ class Response
         } else {
             $body = $this->body;
         }
-
-        /*if ($this->body_only === false && $this->output_format !== 'text') {
-            $body = ['data' => $body];
-            $body['status'] = intval($this->code);
-            $body = array_reverse($body, true);
-        }*/
 
         switch ($this->output_format) {
             case null:
@@ -355,7 +350,7 @@ class Response
         if (null === $format) {
             $this->output_format = null;
 
-            return $this->removeHeader('Content-Type');
+            return $this;
         }
 
         if (!array_key_exists($format, self::OUTPUT_FORMATS)) {
@@ -388,6 +383,8 @@ class Response
                 }
             }
         }
+
+        $this->setOutputFormat($this->output_format);
 
         return $this;
     }
