@@ -238,7 +238,7 @@ class Router
 
                     if (is_callable($callable)) {
                         $match = true;
-                        $this->logger->info('found matching route, execute ['.$route->getClass().'::'.$callable[1].']', [
+                        $this->logger->info('found matching route ['.$route->getPath().'], execute ['.$route->getClass().'::'.$callable[1].']', [
                             'category' => get_class($this),
                         ]);
 
@@ -249,7 +249,7 @@ class Router
                             break;
                         }
                     } else {
-                        $this->logger->debug('found matching route ['.$route->getClass().'::'.$callable[1].'], but callable was not found', [
+                        $this->logger->debug('found matching route ['.$route->getPath().'], but callable ['.$route->getClass().'::'.$callable[1].'] was not found', [
                             'category' => get_class($this),
                         ]);
                     }
