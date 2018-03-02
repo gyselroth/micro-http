@@ -12,6 +12,12 @@ declare(strict_types=1);
 
 namespace Micro\Http;
 
-class Exception extends \Exception
+interface ExceptionInterface
 {
+    /**
+     * Get HTTP status code.
+     *
+     * @return int
+     */
+    public function getStatusCode(): int;
 }

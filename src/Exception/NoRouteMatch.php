@@ -10,8 +10,17 @@ declare(strict_types=1);
  * @license     MIT https://opensource.org/licenses/MIT
  */
 
-namespace Micro\Http;
+namespace Micro\Http\Exception;
 
-class Exception extends \Exception
+use Micro\Http\ExceptionInterface;
+
+class NoRouteMatch extends \Exception implements ExceptionInterface
 {
+    /**
+     * {@inheritdoc}
+     */
+    public function getStatusCode(): int
+    {
+        return 404;
+    }
 }

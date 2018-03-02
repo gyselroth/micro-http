@@ -179,10 +179,6 @@ class Response
      */
     public function send(): void
     {
-        if (!isset($this->headers['Content-Type'])) {
-            //    $this->setOutputFormat(null);
-        }
-
         $status = Http::STATUS_CODES[$this->code];
         $this->sendHeaders();
         header('HTTP/1.0 '.$this->code.' '.$status, true, $this->code);

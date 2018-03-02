@@ -261,8 +261,9 @@ class Router
             }
 
             if (false === $match) {
-                throw new Exception($this->verb.' '.$this->path.' could not be routed, no matching routes found');
+                throw new Exception\NoRouteMatch($this->verb.' '.$this->path.' could not be routed, no matching routes found');
             }
+
             if ($response instanceof Response) {
                 $this->logger->info('send http response ['.$response->getCode().']', [
                         'category' => get_class($this),
@@ -271,8 +272,8 @@ class Router
                 $response->send();
             } else {
                 $this->logger->debug('callback did not return a response, route exectuted successfully', [
-                        'category' => get_class($this),
-                    ]);
+                    'category' => get_class($this),
+                ]);
             }
 
             return true;
@@ -299,8 +300,8 @@ class Router
             'code' => $exception->getCode(),
         ];
 
-        if (defined("$class::HTTP_CODE")) {
-            $http_code = $class::HTTP_CODE;
+        if ($exception instanceof ExceptionInterface) {
+            $http_code = $exception->getStatusCode();
         } else {
             $http_code = 500;
         }
@@ -337,6 +338,44 @@ class Router
     }
 
     /**
+     * Decode request.
+     *
+     * @param array $parsed_params
+     *
+     * @return array
+     */
+    protected function decodeRequest(array $parsed_params): array
+    {
+        if ('application/x-www-form-urlencoded' === $this->content_type) {
+            $body = file_get_contents('php://input');
+            parse_str($body, $decode);
+
+            return array_merge($decode, $_REQUEST, $parsed_params);
+        }
+        if ('application/json' === $this->content_type) {
+            $body = file_get_contents('php://input');
+            $json_params = [];
+
+            if (!empty($body)) {
+                $json_params = json_decode($body, true);
+            } else {
+                $parts = explode('&', $_SERVER['QUERY_STRING']);
+                if (!empty($parts)) {
+                    $json_params = json_decode(urldecode($parts[0]), true);
+                }
+            }
+
+            if (JSON_ERROR_NONE !== json_last_error()) {
+                throw new Exception\InvalidJson('invalid json input given');
+            }
+
+            return array_merge($json_params, $_REQUEST, $parsed_params);
+        }
+
+        return array_merge($parsed_params, $_REQUEST);
+    }
+
+    /**
      * Check if method got params and combine these with
      * $_REQUEST.
      *
@@ -353,29 +392,7 @@ class Router
             $meta = new ReflectionMethod($class, $method);
             $params = $meta->getParameters();
             $json_params = [];
-
-            if ('application/x-www-form-urlencoded' === $this->content_type) {
-                $body = file_get_contents('php://input');
-                parse_str($body, $decode);
-                $request_params = array_merge($decode, $_REQUEST, $parsed_params);
-            } elseif ('application/json' === $this->content_type) {
-                $body = file_get_contents('php://input');
-                if (!empty($body)) {
-                    $json_params = json_decode($body, true);
-                } else {
-                    $parts = explode('&', $_SERVER['QUERY_STRING']);
-                    if (!empty($parts)) {
-                        $json_params = json_decode(urldecode($parts[0]), true);
-                    }
-                }
-                if (null === $json_params) {
-                    throw new Exception('invalid json input given');
-                }
-
-                $request_params = array_merge($json_params, $_REQUEST, $parsed_params);
-            } else {
-                $request_params = array_merge($parsed_params, $_REQUEST);
-            }
+            $request_params = $this->decodeRequest($parsed_params);
 
             foreach ($params as $param) {
                 $type = (string) $param->getType();
@@ -398,45 +415,54 @@ class Router
 
                     continue;
                 }
+
                 if (null === $param_value && false === $optional) {
-                    throw new Exception('misssing required parameter '.$param->name);
+                    throw new Exception\MissingInputArgument('misssing required input parameter '.$param->name);
                 }
 
-                switch ($type) {
-                    case 'bool':
-                        if ('false' === $param_value) {
-                            $return[$param->name] = false;
-                        } else {
-                            $return[$param->name] = (bool) $param_value;
-                        }
-
-                    break;
-                    case 'int':
-                        $return[$param->name] = (int) $param_value;
-
-                    break;
-                    case 'float':
-                        $return[$param->name] = (float) $param_value;
-
-                    break;
-                    case 'array':
-                        $return[$param->name] = (array) $param_value;
-
-                    break;
-                    default:
-                        if (class_exists($type) && null !== $param_value) {
-                            $return[$param->name] = new $type($param_value);
-                        } else {
-                            $return[$param->name] = $param_value;
-                        }
-
-                    break;
-                }
+                $return[$param->name] = $this->convertParam($type, $param_value);
             }
 
             return $return;
         } catch (ReflectionException $e) {
-            throw new Exception('misssing or invalid required request parameter');
+            throw new Exception\MissingInputArgument('misssing or invalid required request parameter');
+        }
+    }
+
+    /**
+     * Convert param.
+     *
+     * @param string $type
+     * @param mixed  $value
+     *
+     * @return mixed
+     */
+    protected function convertParam(string $type, $value)
+    {
+        switch ($type) {
+            case 'bool':
+                if ('false' === $value) {
+                    return false;
+                }
+
+                    return (bool) $value;
+            break;
+            case 'int':
+                return (int) $value;
+            break;
+            case 'float':
+                return (float) $value;
+            break;
+            case 'array':
+                return (array) $value;
+            break;
+            default:
+                if (class_exists($type) && null !== $value) {
+                    return new $type($value);
+                }
+
+                    return $value;
+            break;
         }
     }
 }
