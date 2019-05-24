@@ -446,15 +446,19 @@ class Router
                 }
 
                     return (bool) $value;
+
             break;
             case 'int':
                 return (int) $value;
+
             break;
             case 'float':
                 return (float) $value;
+
             break;
             case 'array':
                 return (array) $value;
+
             break;
             default:
                 if (class_exists($type) && null !== $value) {
@@ -462,6 +466,7 @@ class Router
                 }
 
                     return $value;
+
             break;
         }
     }

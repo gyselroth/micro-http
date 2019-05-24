@@ -189,9 +189,10 @@ class Response
 
         if ($this->body instanceof Closure) {
             $body = $this->body->call($this);
-        } else {
-            $body = $this->body;
+
+            return;
         }
+        $body = $this->body;
 
         switch ($this->output_format) {
             case null:
@@ -263,6 +264,10 @@ class Response
             $result = json_encode($body, JSON_PRETTY_PRINT);
         } else {
             $result = json_encode($body);
+        }
+
+        if (false === $result) {
+            return '';
         }
 
         $this->setContentLength($result);
