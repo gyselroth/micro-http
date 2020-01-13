@@ -376,8 +376,8 @@ class Response
 
         //through HTTP_ACCEPT
         if (isset($_SERVER['HTTP_ACCEPT']) && false === strpos($_SERVER['HTTP_ACCEPT'], '*/*')) {
-            foreach (self::OUTPUT_FORMATS as $format) {
-                if (false !== strpos($_SERVER['HTTP_ACCEPT'], $format)) {
+            foreach (self::OUTPUT_FORMATS as $format => $type) {
+                if (false !== strpos($_SERVER['HTTP_ACCEPT'], $type)) {
                     $this->output_format = $format;
 
                     break;

@@ -352,7 +352,7 @@ class Router
 
             return array_merge($decode, $_REQUEST, $parsed_params);
         }
-        if ('application/json' === $this->content_type) {
+        if ('application/json' === $this->content_type || 'application/json; charset=utf-8' === $this->content_type) {
             $body = file_get_contents('php://input');
             $json_params = [];
 
